@@ -3,6 +3,11 @@ class CloudStorageApp {
         this.currentSection = 'files';
         this.currentView = 'grid';
         this.files = this.loadFiles();
+        this.backups = this.loadBackups();
+        this.devices = this.loadDevices();
+        this.apiKeys = this.loadApiKeys();
+        this.securityAlerts = this.loadSecurityAlerts();
+        this.selectedFiles = new Set();
         this.init();
     }
 
@@ -19,6 +24,83 @@ class CloudStorageApp {
                 e.preventDefault();
                 this.switchSection(item.dataset.section);
             });
+        });
+
+        // New functionality buttons
+        document.getElementById('compressBtn')?.addEventListener('click', () => {
+            this.openCompressionModal();
+        });
+
+        document.getElementById('encryptBtn')?.addEventListener('click', () => {
+            this.openEncryptionModal();
+        });
+
+        document.getElementById('versionBtn')?.addEventListener('click', () => {
+            this.openVersionsModal();
+        });
+
+        // Backup functionality
+        document.getElementById('createBackupBtn')?.addEventListener('click', () => {
+            this.createBackup();
+        });
+
+        document.getElementById('configBackupBtn')?.addEventListener('click', () => {
+            this.configureBackup();
+        });
+
+        // Sync functionality
+        document.getElementById('addDeviceBtn')?.addEventListener('click', () => {
+            this.addDevice();
+        });
+
+        // API functionality
+        document.getElementById('generateApiKeyBtn')?.addEventListener('click', () => {
+            this.generateApiKey();
+        });
+
+        // CDN functionality
+        document.getElementById('enableCdnBtn')?.addEventListener('click', () => {
+            this.enableCdn();
+        });
+
+        // Security functionality
+        document.getElementById('securityScanBtn')?.addEventListener('click', () => {
+            this.runSecurityScan();
+        });
+
+        // Settings functionality
+        document.getElementById('twoFactorToggle')?.addEventListener('change', (e) => {
+            this.toggleTwoFactor(e.target.checked);
+        });
+
+        document.getElementById('encryptionToggle')?.addEventListener('change', (e) => {
+            this.toggleEncryption(e.target.checked);
+        });
+
+        document.getElementById('logoutAllBtn')?.addEventListener('click', () => {
+            this.logoutAllSessions();
+        });
+
+        // Modal functionality
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.closest('.modal').style.display = 'none';
+            });
+        });
+
+        // Compression modal
+        document.getElementById('startCompressionBtn')?.addEventListener('click', () => {
+            this.startCompression();
+        });
+
+        // Encryption modal
+        document.getElementById('startEncryptionBtn')?.addEventListener('click', () => {
+            this.startEncryption();
+        });
+
+        // Password strength checker
+        document.getElementById('encryptionPassword')?.addEventListener('input', (e) => {
+            this.checkPasswordStrength(e.target.value);
         });
 
         // View toggle
@@ -94,6 +176,26 @@ class CloudStorageApp {
             });
         });
 
+        // File selection
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.file-item')) {
+                if (e.ctrlKey || e.metaKey) {
+                    this.toggleFileSelection(e.target.closest('.file-item'));
+                } else {
+                    this.selectFile(e.target.closest('.file-item'));
+                }
+            }
+        });
+
+        // File preview
+        document.addEventListener('dblclick', (e) => {
+            if (e.target.closest('.file-item')) {
+                const fileId = e.target.closest('.file-item').dataset.fileId;
+                const file = this.files.find(f => f.id == fileId);
+                this.previewFile(file);
+            }
+        });
+
         // Sort
         document.querySelector('.sort-select').addEventListener('change', (e) => {
             this.sortFiles(e.target.value);
@@ -108,7 +210,10 @@ class CloudStorageApp {
                 type: 'presentation',
                 size: '2.5 MB',
                 date: '2024-01-15',
-                icon: 'fas fa-file-powerpoint'
+                icon: 'fas fa-file-powerpoint',
+                encrypted: false,
+                compressed: false,
+                versions: 3
             },
             {
                 id: 2,
@@ -116,7 +221,10 @@ class CloudStorageApp {
                 type: 'document',
                 size: '1.2 MB',
                 date: '2024-01-14',
-                icon: 'fas fa-file-pdf'
+                icon: 'fas fa-file-pdf',
+                encrypted: true,
+                compressed: false,
+                versions: 1
             },
             {
                 id: 3,
@@ -124,7 +232,10 @@ class CloudStorageApp {
                 type: 'image',
                 size: '3.8 MB',
                 date: '2024-01-13',
-                icon: 'fas fa-file-image'
+                icon: 'fas fa-file-image',
+                encrypted: false,
+                compressed: true,
+                versions: 2
             },
             {
                 id: 4,
@@ -132,7 +243,10 @@ class CloudStorageApp {
                 type: 'video',
                 size: '15.6 MB',
                 date: '2024-01-12',
-                icon: 'fas fa-file-video'
+                icon: 'fas fa-file-video',
+                encrypted: false,
+                compressed: false,
+                versions: 1
             },
             {
                 id: 5,
@@ -140,7 +254,10 @@ class CloudStorageApp {
                 type: 'folder',
                 size: '25 archivos',
                 date: '2024-01-11',
-                icon: 'fas fa-folder'
+                icon: 'fas fa-folder',
+                encrypted: false,
+                compressed: false,
+                versions: 1
             },
             {
                 id: 6,
@@ -148,11 +265,102 @@ class CloudStorageApp {
                 type: 'code',
                 size: '45 KB',
                 date: '2024-01-10',
-                icon: 'fas fa-file-code'
+                icon: 'fas fa-file-code',
+                encrypted: true,
+                compressed: true,
+                versions: 5
             }
         ];
 
         return JSON.parse(localStorage.getItem('cloudFiles')) || defaultFiles;
+    }
+
+    loadBackups() {
+        const defaultBackups = [
+            {
+                id: 1,
+                name: 'Backup Completo - Enero 2024',
+                date: '2024-01-15 14:30',
+                size: '3.2 GB',
+                status: 'completed'
+            },
+            {
+                id: 2,
+                name: 'Backup Incremental - Enero 2024',
+                date: '2024-01-14 06:00',
+                size: '450 MB',
+                status: 'completed'
+            }
+        ];
+        return JSON.parse(localStorage.getItem('cloudBackups')) || defaultBackups;
+    }
+
+    loadDevices() {
+        const defaultDevices = [
+            {
+                id: 1,
+                name: 'MacBook Pro',
+                type: 'laptop',
+                status: 'online',
+                lastSync: '2024-01-15 15:30',
+                icon: 'fas fa-laptop'
+            },
+            {
+                id: 2,
+                name: 'iPhone 15',
+                type: 'mobile',
+                status: 'online',
+                lastSync: '2024-01-15 15:25',
+                icon: 'fas fa-mobile-alt'
+            },
+            {
+                id: 3,
+                name: 'iPad Air',
+                type: 'tablet',
+                status: 'offline',
+                lastSync: '2024-01-14 20:15',
+                icon: 'fas fa-tablet-alt'
+            }
+        ];
+        return JSON.parse(localStorage.getItem('cloudDevices')) || defaultDevices;
+    }
+
+    loadApiKeys() {
+        const defaultKeys = [
+            {
+                id: 1,
+                name: 'Producción API',
+                key: 'cs_prod_1234567890abcdef',
+                created: '2024-01-10',
+                lastUsed: '2024-01-15'
+            },
+            {
+                id: 2,
+                name: 'Desarrollo API',
+                key: 'cs_dev_abcdef1234567890',
+                created: '2024-01-05',
+                lastUsed: '2024-01-14'
+            }
+        ];
+        return JSON.parse(localStorage.getItem('cloudApiKeys')) || defaultKeys;
+    }
+
+    loadSecurityAlerts() {
+        const defaultAlerts = [
+            {
+                id: 1,
+                message: 'Nuevo inicio de sesión desde Madrid, España',
+                type: 'info',
+                date: '2024-01-15 14:20'
+            },
+            {
+                id: 2,
+                message: 'Intento de acceso fallido detectado',
+                type: 'warning',
+                date: '2024-01-14 22:15'
+            }
+        ];
+        return JSON.parse(localStorage.getItem('cloudSecurityAlerts')) || defaultAlerts;
     }
 
     saveFiles() {
@@ -187,6 +395,21 @@ class CloudStorageApp {
                 break;
             case 'analytics':
                 this.renderAnalytics();
+                break;
+            case 'backup':
+                this.renderBackups();
+                break;
+            case 'sync':
+                this.renderSync();
+                break;
+            case 'api':
+                this.renderApi();
+                break;
+            case 'cdn':
+                this.renderCdn();
+                break;
+            case 'security':
+                this.renderSecurity();
                 break;
         }
     }
@@ -459,6 +682,18 @@ class CloudStorageApp {
             case 'rename':
                 this.renameFile(file);
                 break;
+            case 'compress':
+                this.compressFile(file);
+                break;
+            case 'encrypt':
+                this.encryptFile(file);
+                break;
+            case 'versions':
+                this.showFileVersions(file);
+                break;
+            case 'properties':
+                this.showFileProperties(file);
+                break;
             case 'delete':
                 this.deleteFile(file);
                 break;
@@ -561,32 +796,358 @@ class CloudStorageApp {
             `${usedGB.toFixed(1)} GB de ${totalGB} GB usados`;
     }
 
-    showNotification(message) {
-        // Create notification element
+    showNotification(message, type = 'info') {
+        const container = document.getElementById('notificationContainer');
         const notification = document.createElement('div');
-        notification.className = 'notification';
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--gradient-primary);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas ${
+                    type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                    type === 'warning' ? 'fa-exclamation-triangle' :
+                    'fa-info-circle'
+                }"></i>
+                <span>${message}</span>
+            </div>
         `;
         
-        document.body.appendChild(notification);
+        container.appendChild(notification);
         
         setTimeout(() => {
             notification.remove();
+        }, 5000);
+    }
+
+    // New functionality methods
+    openCompressionModal() {
+        if (this.selectedFiles.size === 0) {
+            this.showNotification('Selecciona archivos para comprimir', 'warning');
+            return;
+        }
+        document.getElementById('compressionModal').style.display = 'block';
+    }
+
+    openEncryptionModal() {
+        if (this.selectedFiles.size === 0) {
+            this.showNotification('Selecciona archivos para cifrar', 'warning');
+            return;
+        }
+        document.getElementById('encryptionModal').style.display = 'block';
+    }
+
+    openVersionsModal() {
+        document.getElementById('versionsModal').style.display = 'block';
+        this.renderVersions();
+    }
+
+    startCompression() {
+        const archiveName = document.getElementById('archiveName').value || 'archivo.zip';
+        const level = document.getElementById('compressionLevel').value;
+        
+        this.showNotification('Iniciando compresión...', 'info');
+        
+        // Simulate compression
+        setTimeout(() => {
+            const newFile = {
+                id: Date.now(),
+                name: archiveName,
+                type: 'archive',
+                size: '2.1 MB',
+                date: new Date().toISOString().split('T')[0],
+                icon: 'fas fa-file-archive',
+                encrypted: false,
+                compressed: true,
+                versions: 1
+            };
+            
+            this.files.unshift(newFile);
+            this.saveFiles();
+            this.renderFiles();
+            this.showNotification('Archivo comprimido exitosamente', 'success');
+            document.getElementById('compressionModal').style.display = 'none';
+        }, 2000);
+    }
+
+    startEncryption() {
+        const password = document.getElementById('encryptionPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        
+        if (password !== confirm) {
+            this.showNotification('Las contraseñas no coinciden', 'error');
+            return;
+        }
+        
+        if (password.length < 8) {
+            this.showNotification('La contraseña debe tener al menos 8 caracteres', 'error');
+            return;
+        }
+        
+        this.showNotification('Cifrando archivos...', 'info');
+        
+        // Simulate encryption
+        setTimeout(() => {
+            this.selectedFiles.forEach(fileId => {
+                const file = this.files.find(f => f.id == fileId);
+                if (file) {
+                    file.encrypted = true;
+                    file.name += '.encrypted';
+                }
+            });
+            
+            this.saveFiles();
+            this.renderFiles();
+            this.showNotification('Archivos cifrados exitosamente', 'success');
+            document.getElementById('encryptionModal').style.display = 'none';
+        }, 2000);
+    }
+
+    checkPasswordStrength(password) {
+        const strengthBar = document.querySelector('.strength-fill');
+        let strength = 0;
+        
+        if (password.length >= 8) strength += 25;
+        if (/[A-Z]/.test(password)) strength += 25;
+        if (/[0-9]/.test(password)) strength += 25;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+        
+        strengthBar.style.width = strength + '%';
+    }
+
+    selectFile(fileElement) {
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        fileElement.classList.add('selected');
+        this.selectedFiles.clear();
+        this.selectedFiles.add(fileElement.dataset.fileId);
+    }
+
+    toggleFileSelection(fileElement) {
+        const fileId = fileElement.dataset.fileId;
+        if (this.selectedFiles.has(fileId)) {
+            this.selectedFiles.delete(fileId);
+            fileElement.classList.remove('selected');
+        } else {
+            this.selectedFiles.add(fileId);
+            fileElement.classList.add('selected');
+        }
+    }
+
+    previewFile(file) {
+        const modal = document.getElementById('previewModal');
+        const title = document.getElementById('previewTitle');
+        const container = document.getElementById('previewContainer');
+        
+        title.textContent = file.name;
+        
+        if (file.type === 'image') {
+            container.innerHTML = `<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=" class="preview-image" alt="Preview">`;
+        } else if (file.type === 'document' || file.type === 'code') {
+            container.innerHTML = `<textarea class="preview-text" readonly>Contenido del archivo: ${file.name}\n\nEste es un ejemplo de vista previa del contenido del archivo.\nEn una implementación real, aquí se mostraría el contenido real del archivo.</textarea>`;
+        } else {
+            container.innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary);">
+                    <i class="${file.icon}" style="font-size: 64px; margin-bottom: 16px;"></i>
+                    <p>Vista previa no disponible para este tipo de archivo</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Tipo: ${file.type} | Tamaño: ${file.size}</p>
+                </div>
+            `;
+        }
+        
+        modal.style.display = 'block';
+    }
+
+    renderBackups() {
+        const container = document.getElementById('backupList');
+        container.innerHTML = `
+            <h3>Historial de Backups</h3>
+            ${this.backups.map(backup => `
+                <div class="backup-item" style="padding: 12px; background: var(--bg-tertiary); border-radius: 8px; margin: 8px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="margin: 0; font-size: 14px;">${backup.name}</h4>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-secondary);">${backup.date} - ${backup.size}</p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-secondary" onclick="app.restoreBackup(${backup.id})">Restaurar</button>
+                            <button class="btn-danger" onclick="app.deleteBackup(${backup.id})">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    renderSync() {
+        const container = document.getElementById('syncDevices');
+        container.innerHTML = this.devices.map(device => `
+            <div class="device-card">
+                <div class="device-icon">
+                    <i class="${device.icon}"></i>
+                </div>
+                <div class="device-info">
+                    <h4>${device.name}</h4>
+                    <div class="device-status text-${device.status === 'online' ? 'success' : 'secondary'}">
+                        ${device.status === 'online' ? 'En línea' : 'Desconectado'}
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Última sync: ${device.lastSync}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderApi() {
+        const container = document.getElementById('apiKeys');
+        container.innerHTML = this.apiKeys.map(key => `
+            <div class="api-key-item">
+                <div>
+                    <h4 style="margin: 0; font-size: 14px;">${key.name}</h4>
+                    <div class="api-key-value">${key.key}</div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Creada: ${key.created} | Último uso: ${key.lastUsed}</p>
+                </div>
+                <button class="btn-danger" onclick="app.revokeApiKey(${key.id})">Revocar</button>
+            </div>
+        `).join('');
+    }
+
+    renderCdn() {
+        // CDN is already rendered in HTML, just update stats
+        this.showNotification('CDN renderizado correctamente', 'success');
+    }
+
+    renderSecurity() {
+        const container = document.getElementById('securityAlerts');
+        container.innerHTML = this.securityAlerts.map(alert => `
+            <div class="alert-item">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>${alert.message}</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">${alert.date}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderVersions() {
+        const container = document.getElementById('versionsList');
+        const selectedFile = this.files.find(f => this.selectedFiles.has(f.id.toString()));
+        
+        if (!selectedFile) {
+            container.innerHTML = '<p>Selecciona un archivo para ver sus versiones</p>';
+            return;
+        }
+        
+        const versions = [];
+        for (let i = 1; i <= selectedFile.versions; i++) {
+            versions.push({
+                version: i,
+                date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                size: selectedFile.size
+            });
+        }
+        
+        container.innerHTML = versions.map(version => `
+            <div class="version-item">
+                <div class="version-info">
+                    <h4>Versión ${version.version}</h4>
+                    <div class="version-date">${version.date} - ${version.size}</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary">Restaurar</button>
+                    <button class="btn-secondary">Descargar</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Advanced functionality methods
+    createBackup() {
+        this.showNotification('Creando backup completo...', 'info');
+        
+        setTimeout(() => {
+            const newBackup = {
+                id: Date.now(),
+                name: `Backup Completo - ${new Date().toLocaleDateString()}`,
+                date: new Date().toLocaleString(),
+                size: '3.8 GB',
+                status: 'completed'
+            };
+            
+            this.backups.unshift(newBackup);
+            localStorage.setItem('cloudBackups', JSON.stringify(this.backups));
+            this.renderBackups();
+            this.showNotification('Backup creado exitosamente', 'success');
         }, 3000);
+    }
+
+    generateApiKey() {
+        const name = prompt('Nombre para la nueva API Key:');
+        if (name) {
+            const newKey = {
+                id: Date.now(),
+                name: name,
+                key: `cs_${Math.random().toString(36).substr(2, 16)}`,
+                created: new Date().toISOString().split('T')[0],
+                lastUsed: 'Nunca'
+            };
+            
+            this.apiKeys.unshift(newKey);
+            localStorage.setItem('cloudApiKeys', JSON.stringify(this.apiKeys));
+            this.renderApi();
+            this.showNotification('API Key generada exitosamente', 'success');
+        }
+    }
+
+    enableCdn() {
+        this.showNotification('Activando CDN global...', 'info');
+        
+        setTimeout(() => {
+            this.showNotification('CDN activado exitosamente', 'success');
+        }, 2000);
+    }
+
+    runSecurityScan() {
+        this.showNotification('Ejecutando escaneo de seguridad...', 'info');
+        
+        setTimeout(() => {
+            this.showNotification('Escaneo completado - No se encontraron amenazas', 'success');
+        }, 3000);
+    }
+
+    toggleTwoFactor(enabled) {
+        this.showNotification(
+            enabled ? 'Autenticación de dos factores activada' : 'Autenticación de dos factores desactivada',
+            'success'
+        );
+    }
+
+    toggleEncryption(enabled) {
+        this.showNotification(
+            enabled ? 'Cifrado de archivos activado' : 'Cifrado de archivos desactivado',
+            'success'
+        );
+    }
+
+    logoutAllSessions() {
+        if (confirm('¿Cerrar todas las sesiones activas?')) {
+            this.showNotification('Todas las sesiones han sido cerradas', 'success');
+        }
     }
 }
 
 // Initialize the app
+let app;
 document.addEventListener('DOMContentLoaded', () => {
-    new CloudStorageApp();
+    app = new CloudStorageApp();
+    
+    // Add selected file styling
+    const style = document.createElement('style');
+    style.textContent = `
+        .file-item.selected {
+            border-color: var(--primary) !important;
+            background: rgba(255, 107, 53, 0.1) !important;
+            transform: translateY(-2px);
+        }
+    `;
+    document.head.appendChild(style);
 });

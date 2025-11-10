@@ -46,6 +46,26 @@
                     <i class="fas fa-chart-bar"></i>
                     <span>Analíticas</span>
                 </a>
+                <a href="#" class="nav-item" data-section="backup">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Backup</span>
+                </a>
+                <a href="#" class="nav-item" data-section="sync">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Sincronización</span>
+                </a>
+                <a href="#" class="nav-item" data-section="api">
+                    <i class="fas fa-code"></i>
+                    <span>API & SDK</span>
+                </a>
+                <a href="#" class="nav-item" data-section="cdn">
+                    <i class="fas fa-globe"></i>
+                    <span>CDN Global</span>
+                </a>
+                <a href="#" class="nav-item" data-section="security">
+                    <i class="fas fa-lock"></i>
+                    <span>Seguridad</span>
+                </a>
                 <a href="#" class="nav-item" data-section="settings">
                     <i class="fas fa-cog"></i>
                     <span>Configuración</span>
@@ -91,6 +111,18 @@
                     <button class="header-btn" id="newFolderBtn">
                         <i class="fas fa-folder-plus"></i>
                         Nueva Carpeta
+                    </button>
+                    <button class="header-btn" id="compressBtn">
+                        <i class="fas fa-file-archive"></i>
+                        Comprimir
+                    </button>
+                    <button class="header-btn" id="encryptBtn">
+                        <i class="fas fa-key"></i>
+                        Cifrar
+                    </button>
+                    <button class="header-btn" id="versionBtn">
+                        <i class="fas fa-history"></i>
+                        Versiones
                     </button>
                     <div class="view-toggle">
                         <button class="view-btn active" data-view="grid">
@@ -194,21 +226,224 @@
                     </div>
                 </section>
 
+                <!-- Backup Section -->
+                <section class="section" id="backup-section">
+                    <div class="section-header">
+                        <h2>Sistema de Backup</h2>
+                        <button class="btn-primary" id="createBackupBtn">
+                            <i class="fas fa-plus"></i>
+                            Crear Backup
+                        </button>
+                    </div>
+                    <div class="backup-grid">
+                        <div class="backup-card">
+                            <h3>Backup Automático</h3>
+                            <div class="backup-status active">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Activo - Cada 6 horas</span>
+                            </div>
+                            <div class="backup-info">
+                                <p>Último backup: Hace 2 horas</p>
+                                <p>Próximo backup: En 4 horas</p>
+                                <p>Tamaño: 3.2 GB</p>
+                            </div>
+                            <button class="btn-secondary" id="configBackupBtn">Configurar</button>
+                        </div>
+                        <div class="backup-list" id="backupList">
+                            <!-- Backup history will be populated here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sync Section -->
+                <section class="section" id="sync-section">
+                    <div class="section-header">
+                        <h2>Sincronización Multi-Dispositivo</h2>
+                        <button class="btn-primary" id="addDeviceBtn">
+                            <i class="fas fa-plus"></i>
+                            Agregar Dispositivo
+                        </button>
+                    </div>
+                    <div class="sync-devices" id="syncDevices">
+                        <!-- Connected devices will be populated here -->
+                    </div>
+                    <div class="sync-settings">
+                        <h3>Configuración de Sincronización</h3>
+                        <div class="sync-options">
+                            <label class="sync-option">
+                                <input type="checkbox" checked>
+                                <span>Sincronización automática</span>
+                            </label>
+                            <label class="sync-option">
+                                <input type="checkbox" checked>
+                                <span>Sincronizar solo con WiFi</span>
+                            </label>
+                            <label class="sync-option">
+                                <input type="checkbox">
+                                <span>Sincronización en tiempo real</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Section -->
+                <section class="section" id="api-section">
+                    <div class="section-header">
+                        <h2>API & SDK</h2>
+                        <button class="btn-primary" id="generateApiKeyBtn">
+                            <i class="fas fa-key"></i>
+                            Generar API Key
+                        </button>
+                    </div>
+                    <div class="api-grid">
+                        <div class="api-card">
+                            <h3>API Keys</h3>
+                            <div class="api-keys" id="apiKeys">
+                                <!-- API keys will be populated here -->
+                            </div>
+                        </div>
+                        <div class="api-card">
+                            <h3>Documentación</h3>
+                            <div class="api-docs">
+                                <div class="doc-item">
+                                    <h4>REST API</h4>
+                                    <p>Acceso completo a archivos y carpetas</p>
+                                    <code>GET /api/v1/files</code>
+                                </div>
+                                <div class="doc-item">
+                                    <h4>WebSocket API</h4>
+                                    <p>Sincronización en tiempo real</p>
+                                    <code>wss://api.cloudstore.com/ws</code>
+                                </div>
+                                <div class="doc-item">
+                                    <h4>SDK JavaScript</h4>
+                                    <p>Librería oficial para web</p>
+                                    <code>npm install cloudstore-sdk</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CDN Section -->
+                <section class="section" id="cdn-section">
+                    <div class="section-header">
+                        <h2>CDN Global</h2>
+                        <button class="btn-primary" id="enableCdnBtn">
+                            <i class="fas fa-rocket"></i>
+                            Activar CDN
+                        </button>
+                    </div>
+                    <div class="cdn-grid">
+                        <div class="cdn-map">
+                            <h3>Red Global de Servidores</h3>
+                            <div class="server-locations">
+                                <div class="server-node active" data-location="us-east">
+                                    <i class="fas fa-server"></i>
+                                    <span>US East (Virginia)</span>
+                                    <div class="latency">12ms</div>
+                                </div>
+                                <div class="server-node active" data-location="eu-west">
+                                    <i class="fas fa-server"></i>
+                                    <span>EU West (Ireland)</span>
+                                    <div class="latency">45ms</div>
+                                </div>
+                                <div class="server-node" data-location="asia-pacific">
+                                    <i class="fas fa-server"></i>
+                                    <span>Asia Pacific (Tokyo)</span>
+                                    <div class="latency">89ms</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cdn-stats">
+                            <h3>Estadísticas CDN</h3>
+                            <div class="stat-item">
+                                <span class="stat-label">Transferencia total</span>
+                                <span class="stat-value">2.4 TB</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Requests/mes</span>
+                                <span class="stat-value">1.2M</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Cache hit ratio</span>
+                                <span class="stat-value">94.2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Security Section -->
+                <section class="section" id="security-section">
+                    <div class="section-header">
+                        <h2>Centro de Seguridad</h2>
+                        <button class="btn-primary" id="securityScanBtn">
+                            <i class="fas fa-shield-alt"></i>
+                            Escanear Seguridad
+                        </button>
+                    </div>
+                    <div class="security-grid">
+                        <div class="security-card">
+                            <h3>Estado de Seguridad</h3>
+                            <div class="security-score">
+                                <div class="score-circle">
+                                    <span class="score-number">95</span>
+                                    <span class="score-label">/100</span>
+                                </div>
+                                <p>Excelente seguridad</p>
+                            </div>
+                        </div>
+                        <div class="security-card">
+                            <h3>Cifrado</h3>
+                            <div class="encryption-status">
+                                <div class="encryption-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>AES-256 en reposo</span>
+                                </div>
+                                <div class="encryption-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>TLS 1.3 en tránsito</span>
+                                </div>
+                                <div class="encryption-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Cifrado de extremo a extremo</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="security-card">
+                            <h3>Actividad Sospechosa</h3>
+                            <div class="security-alerts" id="securityAlerts">
+                                <!-- Security alerts will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Settings Section -->
                 <section class="section" id="settings-section">
                     <div class="section-header">
-                        <h2>Configuración</h2>
+                        <h2>Configuración Avanzada</h2>
                     </div>
                     <div class="settings-grid">
                         <div class="settings-card">
                             <h3>Cuenta</h3>
                             <div class="setting-item">
                                 <label>Nombre de usuario</label>
-                                <input type="text" value="usuario@email.com" readonly>
+                                <input type="text" value="usuario@email.com" id="usernameInput">
                             </div>
                             <div class="setting-item">
                                 <label>Plan actual</label>
                                 <span class="plan-badge">Premium</span>
+                                <button class="btn-upgrade">Upgrade</button>
+                            </div>
+                            <div class="setting-item">
+                                <label>Límite de almacenamiento</label>
+                                <select id="storageLimit">
+                                    <option value="10">10 GB</option>
+                                    <option value="100">100 GB</option>
+                                    <option value="1000">1 TB</option>
+                                    <option value="unlimited">Ilimitado</option>
+                                </select>
                             </div>
                         </div>
                         <div class="settings-card">
@@ -216,14 +451,35 @@
                             <div class="setting-item">
                                 <label>Autenticación de dos factores</label>
                                 <label class="toggle">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" checked id="twoFactorToggle">
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="setting-item">
                                 <label>Cifrado de archivos</label>
                                 <label class="toggle">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" checked id="encryptionToggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Sesiones activas</label>
+                                <button class="btn-danger" id="logoutAllBtn">Cerrar todas</button>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Notificaciones</h3>
+                            <div class="setting-item">
+                                <label>Email notifications</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked id="emailNotifications">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Push notifications</label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="pushNotifications">
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -272,9 +528,108 @@
             <i class="fas fa-edit"></i>
             Renombrar
         </div>
+        <div class="context-item" data-action="compress">
+            <i class="fas fa-file-archive"></i>
+            Comprimir
+        </div>
+        <div class="context-item" data-action="encrypt">
+            <i class="fas fa-key"></i>
+            Cifrar
+        </div>
+        <div class="context-item" data-action="versions">
+            <i class="fas fa-history"></i>
+            Ver Versiones
+        </div>
+        <div class="context-item" data-action="properties">
+            <i class="fas fa-info-circle"></i>
+            Propiedades
+        </div>
         <div class="context-item" data-action="delete">
             <i class="fas fa-trash"></i>
             Eliminar
+        </div>
+    </div>
+
+    <!-- File Versions Modal -->
+    <div class="modal" id="versionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Historial de Versiones</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="versions-list" id="versionsList">
+                    <!-- File versions will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compression Modal -->
+    <div class="modal" id="compressionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Comprimir Archivos</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="compression-options">
+                    <label>Nombre del archivo:</label>
+                    <input type="text" id="archiveName" placeholder="archivo.zip">
+                    <label>Nivel de compresión:</label>
+                    <select id="compressionLevel">
+                        <option value="fast">Rápido</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="maximum">Máximo</option>
+                    </select>
+                    <button class="btn-primary" id="startCompressionBtn">Comprimir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encryption Modal -->
+    <div class="modal" id="encryptionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cifrar Archivo</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="encryption-options">
+                    <label>Contraseña de cifrado:</label>
+                    <input type="password" id="encryptionPassword" placeholder="Ingresa una contraseña segura">
+                    <label>Confirmar contraseña:</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirma la contraseña">
+                    <div class="encryption-strength">
+                        <span>Fortaleza: </span>
+                        <div class="strength-bar">
+                            <div class="strength-fill"></div>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="startEncryptionBtn">Cifrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Notifications -->
+    <div class="notification-container" id="notificationContainer">
+        <!-- Notifications will appear here -->
+    </div>
+
+    <!-- File Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="previewTitle">Vista Previa</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-container" id="previewContainer">
+                    <!-- File preview will be shown here -->
+                </div>
+            </div>
         </div>
     </div>
 
