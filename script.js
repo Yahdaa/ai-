@@ -1,229 +1,592 @@
-class ChatApp {
+class CloudStorageApp {
     constructor() {
-        this.chatMessages = document.getElementById('chatMessages');
-        this.messageInput = document.getElementById('messageInput');
-        this.sendButton = document.getElementById('sendButton');
-        this.clearButton = document.getElementById('clearChat');
-        this.loadingOverlay = document.getElementById('loadingOverlay');
-        
-        this.initializeEventListeners();
-        this.autoResizeTextarea();
+        this.currentSection = 'files';
+        this.currentView = 'grid';
+        this.files = this.loadFiles();
+        this.init();
     }
 
-    initializeEventListeners() {
-        this.sendButton.addEventListener('click', () => this.sendMessage());
-        this.messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+    init() {
+        this.setupEventListeners();
+        this.renderFiles();
+        this.updateStorageInfo();
+    }
+
+    setupEventListeners() {
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.sendMessage();
+                this.switchSection(item.dataset.section);
+            });
+        });
+
+        // View toggle
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.switchView(btn.dataset.view);
+            });
+        });
+
+        // Upload
+        document.getElementById('uploadBtn').addEventListener('click', () => {
+            this.openUploadModal();
+        });
+
+        // File input
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            this.handleFileUpload(e.target.files);
+        });
+
+        // Upload area
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary)';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--border)';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--border)';
+            this.handleFileUpload(e.dataTransfer.files);
+        });
+
+        // Modal close
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            this.closeModal();
+        });
+
+        // New folder
+        document.getElementById('newFolderBtn').addEventListener('click', () => {
+            this.createNewFolder();
+        });
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            this.searchFiles(e.target.value);
+        });
+
+        // Context menu
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.closest('.file-item')) {
+                e.preventDefault();
+                this.showContextMenu(e, e.target.closest('.file-item'));
             }
         });
-        this.clearButton.addEventListener('click', () => this.clearChat());
-        this.messageInput.addEventListener('input', () => this.autoResizeTextarea());
+
+        document.addEventListener('click', () => {
+            this.hideContextMenu();
+        });
+
+        // Context menu actions
+        document.querySelectorAll('.context-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                this.handleContextAction(e.target.closest('.context-item').dataset.action);
+            });
+        });
+
+        // Sort
+        document.querySelector('.sort-select').addEventListener('change', (e) => {
+            this.sortFiles(e.target.value);
+        });
     }
 
-    autoResizeTextarea() {
-        this.messageInput.style.height = 'auto';
-        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+    loadFiles() {
+        const defaultFiles = [
+            {
+                id: 1,
+                name: 'Presentación.pptx',
+                type: 'presentation',
+                size: '2.5 MB',
+                date: '2024-01-15',
+                icon: 'fas fa-file-powerpoint'
+            },
+            {
+                id: 2,
+                name: 'Documento.pdf',
+                type: 'document',
+                size: '1.2 MB',
+                date: '2024-01-14',
+                icon: 'fas fa-file-pdf'
+            },
+            {
+                id: 3,
+                name: 'Imagen.jpg',
+                type: 'image',
+                size: '3.8 MB',
+                date: '2024-01-13',
+                icon: 'fas fa-file-image'
+            },
+            {
+                id: 4,
+                name: 'Video.mp4',
+                type: 'video',
+                size: '15.6 MB',
+                date: '2024-01-12',
+                icon: 'fas fa-file-video'
+            },
+            {
+                id: 5,
+                name: 'Carpeta Proyectos',
+                type: 'folder',
+                size: '25 archivos',
+                date: '2024-01-11',
+                icon: 'fas fa-folder'
+            },
+            {
+                id: 6,
+                name: 'Código.js',
+                type: 'code',
+                size: '45 KB',
+                date: '2024-01-10',
+                icon: 'fas fa-file-code'
+            }
+        ];
+
+        return JSON.parse(localStorage.getItem('cloudFiles')) || defaultFiles;
     }
 
-    async sendMessage() {
-        const message = this.messageInput.value.trim();
-        if (!message) return;
+    saveFiles() {
+        localStorage.setItem('cloudFiles', JSON.stringify(this.files));
+    }
 
-        this.addMessage(message, 'user');
-        this.messageInput.value = '';
-        this.autoResizeTextarea();
-        this.sendButton.disabled = true;
+    switchSection(section) {
+        // Update navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-section="${section}"]`).classList.add('active');
 
-        this.showTypingIndicator();
+        // Update sections
+        document.querySelectorAll('.section').forEach(sec => {
+            sec.classList.remove('active');
+        });
+        document.getElementById(`${section}-section`).classList.add('active');
 
-        try {
-            const response = await this.getAIResponse(message);
-            this.hideTypingIndicator();
-            this.addMessage(response, 'ai');
-        } catch (error) {
-            this.hideTypingIndicator();
-            this.addMessage('Lo siento, hubo un error al procesar tu mensaje. Por favor intenta de nuevo.', 'ai');
-            console.error('Error:', error);
+        this.currentSection = section;
+
+        // Render content based on section
+        switch(section) {
+            case 'files':
+                this.renderFiles();
+                break;
+            case 'recent':
+                this.renderRecentFiles();
+                break;
+            case 'shared':
+                this.renderSharedFiles();
+                break;
+            case 'analytics':
+                this.renderAnalytics();
+                break;
         }
-
-        this.sendButton.disabled = false;
     }
 
-    addMessage(content, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
+    switchView(view) {
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+        this.currentView = view;
+        this.renderFiles();
+    }
+
+    renderFiles() {
+        const container = document.getElementById('filesGrid');
+        container.innerHTML = '';
+        container.className = this.currentView === 'grid' ? 'files-grid' : 'files-list';
+
+        this.files.forEach(file => {
+            const fileElement = this.createFileElement(file);
+            container.appendChild(fileElement);
+        });
+    }
+
+    createFileElement(file) {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.dataset.fileId = file.id;
         
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = sender === 'user' ? '👤' : '🤖';
+        div.innerHTML = `
+            <div class="file-icon">
+                <i class="${file.icon}"></i>
+            </div>
+            <div class="file-name">${file.name}</div>
+            <div class="file-info">
+                <span>${file.size}</span>
+                <span>${this.formatDate(file.date)}</span>
+            </div>
+        `;
+
+        div.addEventListener('dblclick', () => {
+            this.openFile(file);
+        });
+
+        return div;
+    }
+
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', { 
+            day: '2-digit', 
+            month: '2-digit' 
+        });
+    }
+
+    openFile(file) {
+        if (file.type === 'folder') {
+            this.showNotification('Abriendo carpeta: ' + file.name);
+        } else {
+            this.showNotification('Abriendo archivo: ' + file.name);
+        }
+    }
+
+    openUploadModal() {
+        document.getElementById('uploadModal').style.display = 'block';
+    }
+
+    closeModal() {
+        document.getElementById('uploadModal').style.display = 'none';
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.querySelector('.progress-fill').style.width = '0%';
+    }
+
+    handleFileUpload(files) {
+        if (files.length === 0) return;
+
+        document.getElementById('uploadProgress').style.display = 'block';
         
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
-        messageContent.textContent = content;
+        Array.from(files).forEach((file, index) => {
+            setTimeout(() => {
+                this.uploadFile(file, index, files.length);
+            }, index * 500);
+        });
+    }
+
+    uploadFile(file, index, total) {
+        const progress = document.querySelector('.progress-fill');
+        const progressText = document.querySelector('.progress-text');
         
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(messageContent);
+        // Simulate upload progress
+        let currentProgress = 0;
+        const interval = setInterval(() => {
+            currentProgress += Math.random() * 30;
+            if (currentProgress >= 100) {
+                currentProgress = 100;
+                clearInterval(interval);
+                
+                // Add file to storage
+                const newFile = {
+                    id: Date.now() + index,
+                    name: file.name,
+                    type: this.getFileType(file.name),
+                    size: this.formatFileSize(file.size),
+                    date: new Date().toISOString().split('T')[0],
+                    icon: this.getFileIcon(file.name)
+                };
+                
+                this.files.unshift(newFile);
+                this.saveFiles();
+                
+                if (index === total - 1) {
+                    setTimeout(() => {
+                        this.closeModal();
+                        this.renderFiles();
+                        this.updateStorageInfo();
+                        this.showNotification(`${total} archivo(s) subido(s) exitosamente`);
+                    }, 500);
+                }
+            }
+            
+            progress.style.width = currentProgress + '%';
+            progressText.textContent = `Subiendo... ${Math.round(currentProgress)}%`;
+        }, 100);
+    }
+
+    getFileType(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const types = {
+            'pdf': 'document',
+            'doc': 'document',
+            'docx': 'document',
+            'txt': 'document',
+            'jpg': 'image',
+            'jpeg': 'image',
+            'png': 'image',
+            'gif': 'image',
+            'mp4': 'video',
+            'avi': 'video',
+            'mov': 'video',
+            'js': 'code',
+            'html': 'code',
+            'css': 'code',
+            'py': 'code',
+            'ppt': 'presentation',
+            'pptx': 'presentation'
+        };
+        return types[ext] || 'file';
+    }
+
+    getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const icons = {
+            'pdf': 'fas fa-file-pdf',
+            'doc': 'fas fa-file-word',
+            'docx': 'fas fa-file-word',
+            'txt': 'fas fa-file-alt',
+            'jpg': 'fas fa-file-image',
+            'jpeg': 'fas fa-file-image',
+            'png': 'fas fa-file-image',
+            'gif': 'fas fa-file-image',
+            'mp4': 'fas fa-file-video',
+            'avi': 'fas fa-file-video',
+            'mov': 'fas fa-file-video',
+            'js': 'fas fa-file-code',
+            'html': 'fas fa-file-code',
+            'css': 'fas fa-file-code',
+            'py': 'fas fa-file-code',
+            'ppt': 'fas fa-file-powerpoint',
+            'pptx': 'fas fa-file-powerpoint'
+        };
+        return icons[ext] || 'fas fa-file';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    createNewFolder() {
+        const name = prompt('Nombre de la nueva carpeta:');
+        if (name) {
+            const newFolder = {
+                id: Date.now(),
+                name: name,
+                type: 'folder',
+                size: '0 archivos',
+                date: new Date().toISOString().split('T')[0],
+                icon: 'fas fa-folder'
+            };
+            
+            this.files.unshift(newFolder);
+            this.saveFiles();
+            this.renderFiles();
+            this.showNotification('Carpeta creada: ' + name);
+        }
+    }
+
+    searchFiles(query) {
+        const filteredFiles = this.files.filter(file => 
+            file.name.toLowerCase().includes(query.toLowerCase())
+        );
         
-        // Remove welcome message if it exists
-        const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-        if (welcomeMessage) {
-            welcomeMessage.remove();
+        const container = document.getElementById('filesGrid');
+        container.innerHTML = '';
+        
+        filteredFiles.forEach(file => {
+            const fileElement = this.createFileElement(file);
+            container.appendChild(fileElement);
+        });
+    }
+
+    sortFiles(criteria) {
+        switch(criteria) {
+            case 'name':
+                this.files.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'date':
+                this.files.sort((a, b) => new Date(b.date) - new Date(a.date));
+                break;
+            case 'size':
+                this.files.sort((a, b) => {
+                    const sizeA = this.parseSizeToBytes(a.size);
+                    const sizeB = this.parseSizeToBytes(b.size);
+                    return sizeB - sizeA;
+                });
+                break;
+            case 'type':
+                this.files.sort((a, b) => a.type.localeCompare(b.type));
+                break;
+        }
+        this.renderFiles();
+    }
+
+    parseSizeToBytes(sizeStr) {
+        const units = { 'KB': 1024, 'MB': 1024*1024, 'GB': 1024*1024*1024 };
+        const match = sizeStr.match(/(\d+\.?\d*)\s*(\w+)/);
+        if (match) {
+            return parseFloat(match[1]) * (units[match[2]] || 1);
+        }
+        return 0;
+    }
+
+    showContextMenu(event, fileElement) {
+        const contextMenu = document.getElementById('contextMenu');
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = event.pageX + 'px';
+        contextMenu.style.top = event.pageY + 'px';
+        contextMenu.dataset.fileId = fileElement.dataset.fileId;
+    }
+
+    hideContextMenu() {
+        document.getElementById('contextMenu').style.display = 'none';
+    }
+
+    handleContextAction(action) {
+        const fileId = document.getElementById('contextMenu').dataset.fileId;
+        const file = this.files.find(f => f.id == fileId);
+        
+        switch(action) {
+            case 'download':
+                this.downloadFile(file);
+                break;
+            case 'share':
+                this.shareFile(file);
+                break;
+            case 'rename':
+                this.renameFile(file);
+                break;
+            case 'delete':
+                this.deleteFile(file);
+                break;
         }
         
-        this.chatMessages.appendChild(messageDiv);
-        this.scrollToBottom();
+        this.hideContextMenu();
     }
 
-    showTypingIndicator() {
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message ai typing-message';
-        typingDiv.innerHTML = `
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-                <div class="typing-indicator">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
+    downloadFile(file) {
+        this.showNotification('Descargando: ' + file.name);
+    }
+
+    shareFile(file) {
+        const shareUrl = `https://cloudstore.com/share/${file.id}`;
+        navigator.clipboard.writeText(shareUrl);
+        this.showNotification('Enlace copiado al portapapeles');
+    }
+
+    renameFile(file) {
+        const newName = prompt('Nuevo nombre:', file.name);
+        if (newName && newName !== file.name) {
+            file.name = newName;
+            this.saveFiles();
+            this.renderFiles();
+            this.showNotification('Archivo renombrado');
+        }
+    }
+
+    deleteFile(file) {
+        if (confirm(`¿Eliminar ${file.name}?`)) {
+            this.files = this.files.filter(f => f.id !== file.id);
+            this.saveFiles();
+            this.renderFiles();
+            this.updateStorageInfo();
+            this.showNotification('Archivo eliminado');
+        }
+    }
+
+    renderRecentFiles() {
+        const container = document.getElementById('recentFiles');
+        const recentFiles = this.files
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10);
+        
+        container.innerHTML = recentFiles.map(file => `
+            <div class="file-item">
+                <div class="file-icon">
+                    <i class="${file.icon}"></i>
+                </div>
+                <div class="file-name">${file.name}</div>
+                <div class="file-info">
+                    <span>${file.size}</span>
+                    <span>${this.formatDate(file.date)}</span>
                 </div>
             </div>
-        `;
-        this.chatMessages.appendChild(typingDiv);
-        this.scrollToBottom();
+        `).join('');
     }
 
-    hideTypingIndicator() {
-        const typingMessage = this.chatMessages.querySelector('.typing-message');
-        if (typingMessage) {
-            typingMessage.remove();
-        }
+    renderSharedFiles() {
+        const container = document.getElementById('sharedFiles');
+        const sharedFiles = this.files.filter(file => Math.random() > 0.7);
+        
+        container.innerHTML = sharedFiles.map(file => `
+            <div class="file-item">
+                <div class="file-icon">
+                    <i class="${file.icon}"></i>
+                </div>
+                <div class="file-name">${file.name}</div>
+                <div class="file-info">
+                    <span>Compartido</span>
+                    <span>${this.formatDate(file.date)}</span>
+                </div>
+            </div>
+        `).join('');
     }
 
-    async getAIResponse(message) {
-        // Using Hugging Face Inference API (free tier)
-        const API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium";
-        
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    inputs: message,
-                    parameters: {
-                        max_length: 100,
-                        temperature: 0.7,
-                        do_sample: true
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.error) {
-                // If model is loading, try alternative approach
-                if (data.error.includes('loading')) {
-                    return this.getFallbackResponse(message);
-                }
-                throw new Error(data.error);
-            }
-
-            return data.generated_text || data[0]?.generated_text || this.getFallbackResponse(message);
-            
-        } catch (error) {
-            console.error('Hugging Face API error:', error);
-            return this.getFallbackResponse(message);
-        }
-    }
-
-    getFallbackResponse(message) {
-        const responses = [
-            "¡Interesante! Cuéntame más sobre eso.",
-            "Entiendo tu punto. ¿Qué opinas sobre esto?",
-            "Esa es una buena pregunta. Déjame pensar...",
-            "Me parece fascinante lo que dices.",
-            "¿Podrías explicarme más detalles?",
-            "Eso suena muy interesante. ¿Cómo llegaste a esa conclusión?",
-            "Gracias por compartir eso conmigo.",
-            "¡Qué perspectiva tan única!",
-            "Me gustaría saber más sobre tu experiencia con eso.",
-            "Esa es una excelente observación."
-        ];
-        
-        // Simple keyword-based responses
-        const lowerMessage = message.toLowerCase();
-        
-        if (lowerMessage.includes('hola') || lowerMessage.includes('hi')) {
-            return "¡Hola! ¿Cómo estás hoy? ¿En qué puedo ayudarte?";
-        }
-        
-        if (lowerMessage.includes('gracias')) {
-            return "¡De nada! Estoy aquí para ayudarte en lo que necesites.";
-        }
-        
-        if (lowerMessage.includes('adiós') || lowerMessage.includes('bye')) {
-            return "¡Hasta luego! Que tengas un excelente día.";
-        }
-        
-        if (lowerMessage.includes('cómo estás')) {
-            return "¡Estoy muy bien, gracias por preguntar! ¿Cómo estás tú?";
-        }
-        
-        if (lowerMessage.includes('nombre')) {
-            return "Soy tu asistente de IA. Puedes llamarme como gustes. ¿Cuál es tu nombre?";
-        }
-        
-        return responses[Math.floor(Math.random() * responses.length)];
-    }
-
-    clearChat() {
-        this.chatMessages.innerHTML = `
-            <div class="welcome-message">
-                <div class="welcome-icon">✨</div>
-                <h2>¡Bienvenido a AI Chat!</h2>
-                <p>Chatea con IA gratuita. Escribe tu mensaje abajo para comenzar.</p>
+    renderAnalytics() {
+        // This would typically render charts using a library like Chart.js
+        const chartContainer = document.getElementById('storageChart');
+        chartContainer.innerHTML = `
+            <div style="text-align: center; color: var(--text-secondary);">
+                <i class="fas fa-chart-pie" style="font-size: 48px; margin-bottom: 16px;"></i>
+                <p>Gráfico de uso de almacenamiento</p>
+                <p style="font-size: 12px;">3.5 GB / 10 GB utilizados</p>
             </div>
         `;
     }
 
-    scrollToBottom() {
+    updateStorageInfo() {
+        const totalSize = this.files.reduce((total, file) => {
+            return total + this.parseSizeToBytes(file.size);
+        }, 0);
+        
+        const usedGB = totalSize / (1024 * 1024 * 1024);
+        const totalGB = 10;
+        const percentage = (usedGB / totalGB) * 100;
+        
+        document.querySelector('.storage-used').style.width = percentage + '%';
+        document.querySelector('.storage-text').textContent = 
+            `${usedGB.toFixed(1)} GB de ${totalGB} GB usados`;
+    }
+
+    showNotification(message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(notification);
+        
         setTimeout(() => {
-            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-        }, 100);
+            notification.remove();
+        }, 3000);
     }
 }
 
-// Initialize the app when DOM is loaded
+// Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-    new ChatApp();
-});
-
-// Add some visual effects
-document.addEventListener('mousemove', (e) => {
-    const cursor = document.querySelector('.cursor');
-    if (!cursor) {
-        const cursorDiv = document.createElement('div');
-        cursorDiv.className = 'cursor';
-        cursorDiv.style.cssText = `
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle, rgba(255,107,53,0.3) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.1s ease;
-        `;
-        document.body.appendChild(cursorDiv);
-    }
-    
-    const cursorElement = document.querySelector('.cursor');
-    cursorElement.style.left = e.clientX - 10 + 'px';
-    cursorElement.style.top = e.clientY - 10 + 'px';
+    new CloudStorageApp();
 });

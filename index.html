@@ -3,56 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat - Crunchyroll Style</title>
+    <title>CloudStore Pro - Almacenamiento en la Nube</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <div class="header-content">
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🤖</div>
-                    <h1>AI Chat</h1>
+                    <i class="fas fa-cloud"></i>
+                    <span>CloudStore Pro</span>
                 </div>
-                <div class="header-actions">
-                    <button class="btn-secondary" id="clearChat">Limpiar Chat</button>
+                <div class="storage-info">
+                    <div class="storage-bar">
+                        <div class="storage-used" style="width: 35%"></div>
+                    </div>
+                    <span class="storage-text">3.5 GB de 10 GB usados</span>
                 </div>
             </div>
-        </header>
 
-        <main class="main-content">
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="welcome-message">
-                        <div class="welcome-icon">✨</div>
-                        <h2>¡Bienvenido a AI Chat!</h2>
-                        <p>Chatea con IA gratuita. Escribe tu mensaje abajo para comenzar.</p>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="files">
+                    <i class="fas fa-folder"></i>
+                    <span>Mis Archivos</span>
+                </a>
+                <a href="#" class="nav-item" data-section="recent">
+                    <i class="fas fa-clock"></i>
+                    <span>Recientes</span>
+                </a>
+                <a href="#" class="nav-item" data-section="shared">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Compartidos</span>
+                </a>
+                <a href="#" class="nav-item" data-section="trash">
+                    <i class="fas fa-trash"></i>
+                    <span>Papelera</span>
+                </a>
+                <a href="#" class="nav-item" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analíticas</span>
+                </a>
+                <a href="#" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">Usuario Pro</span>
+                        <span class="user-plan">Plan Premium</span>
                     </div>
                 </div>
-                
-                <div class="chat-input-container">
-                    <div class="input-wrapper">
-                        <textarea 
-                            id="messageInput" 
-                            placeholder="Escribe tu mensaje aquí..."
-                            rows="1"
-                        ></textarea>
-                        <button id="sendButton" class="send-button">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
-                            </svg>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Inicio</span>
+                        <i class="fas fa-chevron-right"></i>
+                        <span class="breadcrumb-item active">Mis Archivos</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar archivos..." id="searchInput">
+                    </div>
+                    <button class="header-btn" id="uploadBtn">
+                        <i class="fas fa-upload"></i>
+                        Subir
+                    </button>
+                    <button class="header-btn" id="newFolderBtn">
+                        <i class="fas fa-folder-plus"></i>
+                        Nueva Carpeta
+                    </button>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" data-view="list">
+                            <i class="fas fa-list"></i>
                         </button>
                     </div>
-                    <div class="input-footer">
-                        <span class="model-info">Usando Hugging Face API gratuita</span>
-                    </div>
                 </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Files Section -->
+                <section class="section active" id="files-section">
+                    <div class="section-header">
+                        <h2>Mis Archivos</h2>
+                        <div class="section-actions">
+                            <select class="sort-select">
+                                <option value="name">Ordenar por nombre</option>
+                                <option value="date">Ordenar por fecha</option>
+                                <option value="size">Ordenar por tamaño</option>
+                                <option value="type">Ordenar por tipo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="files-grid" id="filesGrid">
+                        <!-- Files will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Recent Section -->
+                <section class="section" id="recent-section">
+                    <div class="section-header">
+                        <h2>Archivos Recientes</h2>
+                    </div>
+                    <div class="recent-files" id="recentFiles">
+                        <!-- Recent files will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Shared Section -->
+                <section class="section" id="shared-section">
+                    <div class="section-header">
+                        <h2>Archivos Compartidos</h2>
+                        <button class="btn-primary" id="shareFileBtn">
+                            <i class="fas fa-share"></i>
+                            Compartir Archivo
+                        </button>
+                    </div>
+                    <div class="shared-files" id="sharedFiles">
+                        <!-- Shared files will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Analytics Section -->
+                <section class="section" id="analytics-section">
+                    <div class="section-header">
+                        <h2>Analíticas de Almacenamiento</h2>
+                    </div>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <div class="card-header">
+                                <h3>Uso de Almacenamiento</h3>
+                                <i class="fas fa-hdd"></i>
+                            </div>
+                            <div class="card-content">
+                                <div class="storage-chart">
+                                    <canvas id="storageChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="card-header">
+                                <h3>Tipos de Archivo</h3>
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="card-content">
+                                <div class="file-types">
+                                    <div class="file-type">
+                                        <span class="type-color" style="background: #ff6b35;"></span>
+                                        <span>Imágenes (45%)</span>
+                                    </div>
+                                    <div class="file-type">
+                                        <span class="type-color" style="background: #00d4ff;"></span>
+                                        <span>Documentos (30%)</span>
+                                    </div>
+                                    <div class="file-type">
+                                        <span class="type-color" style="background: #00ff88;"></span>
+                                        <span>Videos (20%)</span>
+                                    </div>
+                                    <div class="file-type">
+                                        <span class="type-color" style="background: #ffd700;"></span>
+                                        <span>Otros (5%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section class="section" id="settings-section">
+                    <div class="section-header">
+                        <h2>Configuración</h2>
+                    </div>
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3>Cuenta</h3>
+                            <div class="setting-item">
+                                <label>Nombre de usuario</label>
+                                <input type="text" value="usuario@email.com" readonly>
+                            </div>
+                            <div class="setting-item">
+                                <label>Plan actual</label>
+                                <span class="plan-badge">Premium</span>
+                            </div>
+                        </div>
+                        <div class="settings-card">
+                            <h3>Seguridad</h3>
+                            <div class="setting-item">
+                                <label>Autenticación de dos factores</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>Cifrado de archivos</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
+    </div>
 
-        <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner"></div>
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Subir Archivos</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h4>Arrastra archivos aquí o haz clic para seleccionar</h4>
+                    <p>Soporta todos los tipos de archivo</p>
+                    <input type="file" id="fileInput" multiple hidden>
+                </div>
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">Subiendo... 0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-item" data-action="download">
+            <i class="fas fa-download"></i>
+            Descargar
+        </div>
+        <div class="context-item" data-action="share">
+            <i class="fas fa-share"></i>
+            Compartir
+        </div>
+        <div class="context-item" data-action="rename">
+            <i class="fas fa-edit"></i>
+            Renombrar
+        </div>
+        <div class="context-item" data-action="delete">
+            <i class="fas fa-trash"></i>
+            Eliminar
         </div>
     </div>
 
